@@ -3,10 +3,12 @@ import './Expenses.css';
 import { LanguageContext } from '../App';
 import { useExpenses } from '../context/ExpensesContext';
 import { formatDate } from '../utils/dateUtils';
+import { useUser } from '../context/UserContext';
 
 const Expenses = () => {
     const { t } = useContext(LanguageContext);
     const { expenses, addExpense, deleteExpense } = useExpenses();
+    const user = useUser();
     const [showAddForm, setShowAddForm] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -203,6 +205,12 @@ const Expenses = () => {
                                             <>
                                                 <span>•</span>
                                                 <span>{expense.paymentMethod}</span>
+                                            </>
+                                        )}
+                                        {user?.is_admin && expense.user_email && (
+                                            <>
+                                                <span>•</span>
+                                                <span style={{ color: '#10b981' }}>👤 {expense.user_name}</span>
                                             </>
                                         )}
                                     </div>

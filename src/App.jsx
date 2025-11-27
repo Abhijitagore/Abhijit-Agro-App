@@ -13,6 +13,7 @@ import { ExpensesProvider } from './context/ExpensesContext';
 import { RevenueProvider } from './context/RevenueContext';
 import { CropsProvider } from './context/CropsContext';
 import { FieldsProvider } from './context/FieldsContext';
+import UserContext from './context/UserContext';
 
 export const LanguageContext = createContext();
 
@@ -103,101 +104,106 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <LanguageContext.Provider value={{ language, setLanguage, t }}>
-        <ExpensesProvider>
-          <RevenueProvider>
-            <CropsProvider>
-              <FieldsProvider>
-                {!user ? (
-                  <Login onLoginSuccess={handleLoginSuccess} />
-                ) : (
-                  <div className="app">
-                    {/* Mobile Menu Toggle */}
-                    <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </button>
+      <UserContext.Provider value={user}>
+        <LanguageContext.Provider value={{ language, setLanguage, t }}>
+          <ExpensesProvider>
+            <RevenueProvider>
+              <CropsProvider>
+                <FieldsProvider>
+                  {!user ? (
+                    <Login onLoginSuccess={handleLoginSuccess} />
+                  ) : (
+                    <div className="app">
+                      {/* Mobile Menu Toggle */}
+                      <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </button>
 
-                    {/* Mobile Overlay */}
-                    <div
-                      className={`mobile-overlay ${mobileMenuOpen ? 'active' : ''}`}
-                      onClick={closeMobileMenu}
-                    ></div>
+                      {/* Mobile Overlay */}
+                      <div
+                        className={`mobile-overlay ${mobileMenuOpen ? 'active' : ''}`}
+                        onClick={closeMobileMenu}
+                      ></div>
 
-                    <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-                      <div className="sidebar-header">
-                        <div className="logo">
-                          <span className="logo-icon">🌱</span>
-                          <h1 className="logo-text">{t('appName')}</h1>
-                        </div>
-                        <p className="logo-subtitle">{t('appSlogan')}</p>
-                      </div>
-
-                      <nav className="nav">
-                        {tabs.map((tab) => (
-                          <button
-                            key={tab.id}
-                            className={`nav-item ${activeTab === tab.id ? 'active' : ''}`}
-                            onClick={() => {
-                              setActiveTab(tab.id);
-                              closeMobileMenu();
-                            }}
-                          >
-                            <span className="nav-icon">{tab.icon}</span>
-                            <span className="nav-label">{tab.label}</span>
-                          </button>
-                        ))}
-                      </nav>
-
-                      <div className="sidebar-footer">
-                        <div className="language-selector">
-                          <label className="language-label">Language / भाषा / भाषा</label>
-                          <select
-                            className="language-select"
-                            value={language}
-                            onChange={(e) => setLanguage(e.target.value)}
-                          >
-                            <option value="en">English</option>
-                            <option value="hi">हिंदी</option>
-                            <option value="mr">मराठी</option>
-                          </select>
+                      <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+                        <div className="sidebar-header">
+                          <div className="logo">
+                            <span className="logo-icon">🌱</span>
+                            <h1 className="logo-text">{t('appName')}</h1>
+                          </div>
+                          <p className="logo-subtitle">{t('appSlogan')}</p>
                         </div>
 
-                        <div className="user-profile">
-                          <img
-                            src={user.picture}
-                            alt={user.name}
-                            className="user-avatar-img"
-                          />
-                          <div className="user-info">
-                            <div className="user-name">{user.name}</div>
-                            <button className="logout-btn" onClick={handleLogout}>
-                              Logout
+                        <nav className="nav">
+                          {tabs.map((tab) => (
+                            <button
+                              key={tab.id}
+                              className={`nav-item ${activeTab === tab.id ? 'active' : ''}`}
+                              onClick={() => {
+                                setActiveTab(tab.id);
+                                closeMobileMenu();
+                              }}
+                            >
+                              <span className="nav-icon">{tab.icon}</span>
+                              <span className="nav-label">{tab.label}</span>
                             </button>
+                          ))}
+                        </nav>
+
+                        <div className="sidebar-footer">
+                          <div className="language-selector">
+                            <label className="language-label">Language / भाषा / भाषा</label>
+                            <select
+                              className="language-select"
+                              value={language}
+                              onChange={(e) => setLanguage(e.target.value)}
+                            >
+                              <option value="en">English</option>
+                              <option value="hi">हिंदी</option>
+                              <option value="mr">मराठी</option>
+                            </select>
+                          </div>
+
+                          <div className="user-profile">
+                            <img
+                              src={user.picture}
+                              alt={user.name}
+                              className="user-avatar-img"
+                            />
+                            <div className="user-info">
+                              <div className="user-name">
+                                {user.name}
+                                {user.is_admin && <span style={{ marginLeft: '8px', fontSize: '0.85em', background: '#ef4444', padding: '2px 6px', borderRadius: '4px' }}>👑 ADMIN</span>}
+                              </div>
+                              <button className="logout-btn" onClick={handleLogout}>
+                                Logout
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="developer-footer">
+                            <p className="developer-text">
+                              Designed & Developed by <strong>Abhijit Gore</strong>
+                            </p>
                           </div>
                         </div>
+                      </aside>
 
-                        <div className="developer-footer">
-                          <p className="developer-text">
-                            Designed & Developed by <strong>Abhijit Gore</strong>
-                          </p>
+                      <main className="main-content">
+                        <div className="content-wrapper animate-fade-in">
+                          {renderContent()}
                         </div>
-                      </div>
-                    </aside>
-
-                    <main className="main-content">
-                      <div className="content-wrapper animate-fade-in">
-                        {renderContent()}
-                      </div>
-                    </main>
-                  </div>
-                )}
-              </FieldsProvider>
-            </CropsProvider>
-          </RevenueProvider>
-        </ExpensesProvider>
-      </LanguageContext.Provider>
+                      </main>
+                    </div>
+                  )}
+                </FieldsProvider>
+              </CropsProvider>
+            </RevenueProvider>
+          </ExpensesProvider>
+        </LanguageContext.Provider>
+      </UserContext.Provider>
     </GoogleOAuthProvider>
   );
 }

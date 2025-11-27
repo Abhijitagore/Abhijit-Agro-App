@@ -22,22 +22,26 @@ export const googleLogin = async (req, res) => {
         let user;
         if (result.rows.length === 0) {
             // Create new user
+            const isAdmin = googleUser.email === 'abhijitagore2000@gmail.com';
             result = await query(
-                `INSERT INTO users (google_id, email, name, picture) 
-         VALUES ($1, $2, $3, $4) 
+                `INSERT INTO users (google_id, email, name, picture, is_admin) 
+         VALUES ($1, $2, $3, $4, $5) 
          RETURNING *`,
-                [googleUser.googleId, googleUser.email, googleUser.name, googleUser.picture]
+                [googleUser.googleId, googleUser.email, googleUser.name, googleUser.picture, isAdmin]
             );
             user = result.rows[0];
-            console.log('✅ New user created:', user.email);
+            console.log('✅ New user created:', user.email, isAdmin ? '(ADMIN)' : '');
         } else {
             user = result.rows[0];
             // Update user info (in case name or picture changed)
+            // Also ensure admin status is set if email matches
+            const isAdmin = user.email === 'abhijitagore2000@gmail.com';
             await query(
-                'UPDATE users SET name = $1, picture = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
-                [googleUser.name, googleUser.picture, user.id]
+                'UPDATE users SET name = $1, picture = $2, is_admin = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4',
+                [googleUser.name, googleUser.picture, isAdmin, user.id]
             );
-            console.log('✅ User logged in:', user.email);
+            user.is_admin = isAdmin;
+            console.log('✅ User logged in:', user.email, isAdmin ? '(ADMIN)' : '');
         }
 
         // Generate JWT token
@@ -51,6 +55,7 @@ export const googleLogin = async (req, res) => {
                 email: user.email,
                 name: user.name,
                 picture: user.picture,
+                is_admin: user.is_admin || false,
             },
         });
     } catch (error) {

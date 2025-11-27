@@ -15,7 +15,29 @@ const Dashboard = () => {
     const { revenue, addRevenue } = useRevenue();
     const { crops, addCrop } = useCrops();
     const { fields } = useFields();
-    const [selectedSeason, setSelectedSeason] = useState('2024-25');
+
+    // Generate dynamic season options
+    const generateSeasonOptions = () => {
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth();
+        const seasons = [];
+
+        // If we're in Jul-Dec, current season is current year to next year
+        // If we're in Jan-Jun, current season is previous year to current year
+        const currentSeasonStartYear = currentMonth >= 6 ? currentYear : currentYear - 1;
+
+        // Generate 5 season options (current + 4 previous)
+        for (let i = 0; i < 5; i++) {
+            const startYear = currentSeasonStartYear - i;
+            const endYear = startYear + 1;
+            seasons.push(`${startYear}-${endYear.toString().slice(-2)}`);
+        }
+
+        return seasons;
+    };
+
+    const seasonOptions = useMemo(() => generateSeasonOptions(), []);
+    const [selectedSeason, setSelectedSeason] = useState(seasonOptions[0]);
     const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
     const [showRecordSaleModal, setShowRecordSaleModal] = useState(false);
     const [showAddCropModal, setShowAddCropModal] = useState(false);
@@ -234,9 +256,11 @@ const Dashboard = () => {
                         value={selectedSeason}
                         onChange={(e) => setSelectedSeason(e.target.value)}
                     >
-                        <option value="2024-25">{t('season')} 2024-25</option>
-                        <option value="2023-24">{t('season')} 2023-24</option>
-                        <option value="2022-23">{t('season')} 2022-23</option>
+                        {seasonOptions.map((season) => (
+                            <option key={season} value={season}>
+                                {t('season')} {season}
+                            </option>
+                        ))}
                     </select>
                 </div>
             </div>

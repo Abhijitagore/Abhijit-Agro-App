@@ -3,10 +3,25 @@ import { query } from '../config/database.js';
 // Get all fields for the authenticated user
 export const getAllFields = async (req, res) => {
     try {
-        const result = await query(
-            'SELECT * FROM fields WHERE user_id = $1 ORDER BY created_at DESC',
-            [req.user.id]
-        );
+        // Admin sees all fields with user info, normal users only see their own
+        const isAdmin = req.user.is_admin || false;
+        
+        let queryText, queryParams;
+        
+        if (isAdmin) {
+            queryText = `
+                SELECT f.*, u.name as user_name, u.email as user_email
+                FROM fields f
+                LEFT JOIN users u ON f.user_id = u.id
+                ORDER BY f.created_at DESC
+    `;
+            queryParams = [];
+        } else {
+            queryText = 'SELECT * FROM fields WHERE user_id = $1 ORDER BY created_at DESC';
+            queryParams = [req.user.id];
+        }
+        
+        const result = await query(queryText, queryParams);
         res.json({ fields: result.rows });
     } catch (error) {
         console.error('Error fetching fields:', error);
@@ -41,14 +56,14 @@ export const createField = async (req, res) => {
         let image = req.body.image; // In case URL is passed directly
 
         if (req.file) {
-            image = `/uploads/${req.file.filename}`;
+            image = `/ uploads / ${ req.file.filename } `;
         }
 
         const result = await query(
-            `INSERT INTO fields 
-            (user_id, name, location, area, area_unit, soil_type, image, notes) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-            RETURNING *`,
+            `INSERT INTO fields
+    (user_id, name, location, area, area_unit, soil_type, image, notes)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING * `,
             [
                 req.user.id,
                 name,
@@ -75,7 +90,7 @@ export const updateField = async (req, res) => {
         const updates = req.body;
 
         if (req.file) {
-            updates.image = `/uploads/${req.file.filename}`;
+            updates.image = `/ uploads / ${ req.file.filename } `;
         }
 
         // Build dynamic update query
@@ -85,7 +100,7 @@ export const updateField = async (req, res) => {
 
         Object.keys(updates).forEach((key) => {
             if (updates[key] !== undefined) {
-                fields.push(`${key} = $${paramCount}`);
+                fields.push(`${ key } = $${ paramCount } `);
                 values.push(updates[key]);
                 paramCount++;
             }
@@ -99,9 +114,9 @@ export const updateField = async (req, res) => {
 
         const result = await query(
             `UPDATE fields 
-            SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP 
-            WHERE user_id = $${paramCount} AND id = $${paramCount + 1} 
-            RETURNING *`,
+            SET ${ fields.join(', ') }, updated_at = CURRENT_TIMESTAMP 
+            WHERE user_id = $${ paramCount } AND id = $${ paramCount + 1 }
+RETURNING * `,
             values
         );
 

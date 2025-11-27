@@ -3,14 +3,32 @@ import { query } from '../config/database.js';
 // Get all expenses
 export const getAllExpenses = async (req, res) => {
     try {
-        const result = await query(
-            `SELECT e.*, c.name as crop_name 
-       FROM expenses e 
-       LEFT JOIN crops c ON e.crop_id = c.id 
-       WHERE e.user_id = $1 
-       ORDER BY e.date DESC`,
-            [req.user.id]
-        );
+        // Admin sees all expenses with user info, normal users only see their own
+        const isAdmin = req.user.is_admin || false;
+
+        let queryText, queryParams;
+
+        if (isAdmin) {
+            queryText = `
+                SELECT e.*, c.name as crop_name, u.name as user_name, u.email as user_email
+                FROM expenses e 
+                LEFT JOIN crops c ON e.crop_id = c.id 
+                LEFT JOIN users u ON e.user_id = u.id
+                ORDER BY e.date DESC
+    `;
+            queryParams = [];
+        } else {
+            queryText = `
+                SELECT e.*, c.name as crop_name 
+                FROM expenses e 
+                LEFT JOIN crops c ON e.crop_id = c.id 
+                WHERE e.user_id = $1 
+                ORDER BY e.date DESC
+            `;
+            queryParams = [req.user.id];
+        }
+
+        const result = await query(queryText, queryParams);
 
         res.json({ expenses: result.rows });
     } catch (error) {
@@ -66,9 +84,9 @@ export const createExpense = async (req, res) => {
         }
 
         const result = await query(
-            `INSERT INTO expenses (user_id, category, description, amount, date, crop_id, payment_method)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
-             RETURNING *`,
+            `INSERT INTO expenses(user_id, category, description, amount, date, crop_id, payment_method)
+VALUES($1, $2, $3, $4, $5, $6, $7)
+RETURNING * `,
             [req.user.id, category, description, amount, date, resolvedCropId || null, payment_method || null]
         );
 
@@ -87,10 +105,10 @@ export const updateExpense = async (req, res) => {
 
         const result = await query(
             `UPDATE expenses 
-       SET category = $1, description = $2, amount = $3, date = $4, 
-           crop_id = $5, payment_method = $6, updated_at = CURRENT_TIMESTAMP 
-       WHERE id = $7 AND user_id = $8 
-       RETURNING *`,
+       SET category = $1, description = $2, amount = $3, date = $4,
+    crop_id = $5, payment_method = $6, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $7 AND user_id = $8
+RETURNING * `,
             [category, description, amount, date, crop_id || null, payment_method || null, id, req.user.id]
         );
 
@@ -130,12 +148,12 @@ export const deleteExpense = async (req, res) => {
 export const getExpenseStats = async (req, res) => {
     try {
         const result = await query(
-            `SELECT 
-         COUNT(*) as total_count,
-         SUM(amount) as total_amount,
-         AVG(amount) as average_amount,
-         category,
-         COUNT(*) as count_by_category
+            `SELECT
+COUNT(*) as total_count,
+    SUM(amount) as total_amount,
+    AVG(amount) as average_amount,
+    category,
+    COUNT(*) as count_by_category
        FROM expenses 
        WHERE user_id = $1 
        GROUP BY category`,

@@ -61,6 +61,7 @@ export const generateToken = (user) => {
             id: user.id,
             email: user.email,
             name: user.name,
+            is_admin: user.is_admin || false,
         },
         process.env.JWT_SECRET,
         { expiresIn: '7d' } // Token expires in 7 days

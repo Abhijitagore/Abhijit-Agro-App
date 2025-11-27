@@ -3,14 +3,32 @@ import { query } from '../config/database.js';
 // Get all crops for the authenticated user
 export const getAllCrops = async (req, res) => {
     try {
-        const result = await query(
-            `SELECT c.*, f.name as field_name 
-       FROM crops c 
-       LEFT JOIN fields f ON c.field_id = f.id 
-       WHERE c.user_id = $1 
-       ORDER BY c.created_at DESC`,
-            [req.user.id]
-        );
+        // Admin sees all crops with user info, normal users only see their own
+        const isAdmin = req.user.is_admin || false;
+        
+        let queryText, queryParams;
+        
+        if (isAdmin) {
+            queryText = `
+                SELECT c.*, f.name as field_name, u.name as user_name, u.email as user_email
+                FROM crops c 
+                LEFT JOIN fields f ON c.field_id = f.id 
+                LEFT JOIN users u ON c.user_id = u.id
+                ORDER BY c.created_at DESC
+    `;
+            queryParams = [];
+        } else {
+            queryText = `
+                SELECT c.*, f.name as field_name 
+                FROM crops c 
+                LEFT JOIN fields f ON c.field_id = f.id 
+                WHERE c.user_id = $1 
+                ORDER BY c.created_at DESC
+            `;
+            queryParams = [req.user.id];
+        }
+        
+        const result = await query(queryText, queryParams);
 
         res.json({ crops: result.rows });
     } catch (error) {
@@ -96,11 +114,11 @@ export const createCrop = async (req, res) => {
         } = req.body;
 
         const result = await query(
-            `INSERT INTO crops 
-       (user_id, name, variety, field_id, area, planted_date, expected_harvest_date, 
-        status, progress, health, image, notes) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
-       RETURNING *`,
+            `INSERT INTO crops
+    (user_id, name, variety, field_id, area, planted_date, expected_harvest_date,
+        status, progress, health, image, notes)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+RETURNING * `,
             [
                 req.user.id,
                 name,
@@ -137,7 +155,7 @@ export const updateCrop = async (req, res) => {
 
         Object.keys(updates).forEach((key) => {
             if (updates[key] !== undefined) {
-                fields.push(`${key} = $${paramCount}`);
+                fields.push(`${ key } = $${ paramCount } `);
                 values.push(updates[key]);
                 paramCount++;
             }
@@ -151,9 +169,9 @@ export const updateCrop = async (req, res) => {
 
         const result = await query(
             `UPDATE crops 
-       SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP 
-       WHERE user_id = $${paramCount} AND id = $${paramCount + 1} 
-       RETURNING *`,
+       SET ${ fields.join(', ') }, updated_at = CURRENT_TIMESTAMP 
+       WHERE user_id = $${ paramCount } AND id = $${ paramCount + 1 }
+RETURNING * `,
             values
         );
 
@@ -227,8 +245,8 @@ export const updateSchedule = async (req, res) => {
 
         const result = await query(
             `UPDATE schedules SET done = $1, updated_at = CURRENT_TIMESTAMP 
-       WHERE id = $2 
-       RETURNING *`,
+       WHERE id = $2
+RETURNING * `,
             [done, id]
         );
 
