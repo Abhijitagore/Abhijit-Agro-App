@@ -2,7 +2,7 @@
 export const translations = {
     en: {
         // App Name - Always in English
-        appName: "Goreverse AgroBook",
+        appName: "GoreVerse FarmLedger",
         appSlogan: "Where Every Harvest Matters",
 
         // Navigation
@@ -100,7 +100,7 @@ export const translations = {
 
     hi: {
         // App Name - Always in English
-        appName: "Goreverse AgroBook",
+        appName: "GoreVerse FarmLedger",
         appSlogan: "जहां हर फसल मायने रखती है",
 
         // Navigation
@@ -198,7 +198,7 @@ export const translations = {
 
     mr: {
         // App Name - Always in English
-        appName: "Goreverse AgroBook",
+        appName: "GoreVerse FarmLedger",
         appSlogan: "जिथे प्रत्येक पीक महत्त्वाची आहे",
 
         // Navigation

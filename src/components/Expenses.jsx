@@ -24,7 +24,7 @@ const Expenses = () => {
     const fields = ['North Field', 'East Field', 'West Field', 'South Field'];
     const paymentMethods = ['Cash', 'Bank Transfer', 'UPI', 'Credit Card'];
 
-    const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+    const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
     const avgExpense = expenses.length > 0 ? totalExpenses / expenses.length : 0;
 
     const handleSubmit = (e) => {
@@ -195,7 +195,7 @@ const Expenses = () => {
                                 <div className="expense-main">
                                     <div className="expense-header">
                                         <span className="expense-category">{expense.category}</span>
-                                        <span className="expense-amount">-₹{expense.amount.toLocaleString()}</span>
+                                        <span className="expense-amount">-₹{parseFloat(expense.amount).toLocaleString()}</span>
                                     </div>
                                     <div className="expense-details">
                                         <span>{expense.field}</span>

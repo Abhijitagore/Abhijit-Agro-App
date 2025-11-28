@@ -7,6 +7,9 @@ import { useCrops } from '../context/CropsContext';
 import { useFields } from '../context/FieldsContext';
 import FarmingBot from './FarmingBot';
 import { formatDate } from '../utils/dateUtils';
+import { useUser } from '../context/UserContext';
+import { exportToExcel } from '../utils/excelExport';
+
 
 
 const Dashboard = () => {
@@ -15,6 +18,7 @@ const Dashboard = () => {
     const { revenue, addRevenue } = useRevenue();
     const { crops, addCrop } = useCrops();
     const { fields } = useFields();
+    const user = useUser();
 
     // Generate dynamic season options
     const generateSeasonOptions = () => {
@@ -243,6 +247,34 @@ const Dashboard = () => {
         setShowAddCropModal(false);
     };
 
+    const handleExportExcel = () => {
+        // Calculate stats for the report
+        const totalRev = revenue.reduce((sum, rev) => sum + parseFloat(rev.amount || 0), 0);
+        const totalExp = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+        const profit = totalRev - totalExp;
+
+        const reportStats = {
+            totalRevenue: totalRev,
+            totalExpenses: totalExp,
+            netProfit: profit
+        };
+
+        // Get all expenses and revenue (not just recent 5)
+        const allExpenses = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const allRevenue = [...revenue].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Get active crops
+        const activeCrops = crops.map(crop => ({
+            name: crop.name,
+            field: crop.field_name || 'Unknown',
+            status: crop.status,
+            progress: crop.progress,
+            health: crop.health
+        }));
+
+        exportToExcel(user, reportStats, allExpenses, allRevenue, activeCrops);
+    };
+
     return (
         <div className="dashboard">
             <div className="dashboard-header">
@@ -251,6 +283,14 @@ const Dashboard = () => {
                     <p className="page-subtitle">{t('welcomeBack')}</p>
                 </div>
                 <div className="header-actions">
+                    <button
+                        className="btn btn-primary"
+                        onClick={handleExportExcel}
+                        style={{ marginRight: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                        <span>📊</span>
+                        Export Excel
+                    </button>
                     <select
                         className="input season-select"
                         value={selectedSeason}

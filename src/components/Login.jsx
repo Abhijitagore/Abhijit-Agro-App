@@ -47,7 +47,7 @@ const Login = ({ onLoginSuccess }) => {
                 <div className="login-header">
                     <div className="login-logo">
                         <span className="login-logo-icon">🌱</span>
-                        <h1 className="login-logo-text">Goreverse AgroBook</h1>
+                        <h1 className="login-logo-text">GoreVerse FarmLedger</h1>
                     </div>
                     <p className="login-slogan">Where Every Harvest Matters</p>
                 </div>
