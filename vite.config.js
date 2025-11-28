@@ -20,4 +20,17 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'google-vendor': ['@react-oauth/google'],
+          'excel-vendor': ['xlsx'],
+        },
+      },
+    },
+  },
 });
